@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>notes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        main {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+        }
+
+        section {
+            flex: 1;
+            padding: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        ul li {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        .note-item {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .note-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .modal-cont {
+            height: 50vh;
+            width: 50vw;
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #201d1d;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .textarea-cont {
+            height: 100%;
+            width: 100%;
+            border: none;
+            /* padding: 10px; */
+            outline: none;
+            resize: none;
+        }
+
+        .modal-title-cont {
+            /* small pop box as title is not that large */
+            height: 5vh;
+            width: 10vw;
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #201d1d;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .modal-title-cont input {
+            height: 100%;
+            width: 100%;
+            border: none;
+            /* padding: 10px; */
+            outline: none;
+            resize: none;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Note-Making Website</h1>
+    </header>
+    <main>
+        <section id="notebook-section">
+            <h2>Notebooks</h2>
+            <ul id="notebook-list">
+                <!-- Notebook items will be dynamically added here -->
+            </ul>
+            <button id="create-notebook-btn">Create Notebook</button>
+        </section>
+        <!-- first a pop-box for asking title and then open modal cont for full task -->
+        <div class="modal-title-cont">
+            <input type="text" placeholder="Enter Title">
+            <!-- just after entering title listen for enter button -->
+        </div>
+
+        <div class="modal-cont ">
+            <textarea class="textarea-cont" placeholder="Enter Your Task (Shift to save)"></textarea>
+        </div>
+
+        <section id="note-section">
+            <h2>Notes</h2>
+            <button id="create-note-btn">Create Note</button>
+            <div id="note-list">
+                <!-- Note items will be dynamically added here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- <script src="script.js"></script> -->
+    <script>
+        // Function to populate notebook options in select tag
+        let selectedNotebook = 'unclassified';
+        const nlist = document.getElementById('notebook-list');
+        function populateNotebookOptions()
+        {
+            // const notebookSelect = document.getElementById('notebook-select');
+            const notebookList = JSON.parse(localStorage.getItem('notebooks')) || [];
+            // console.log(notebookList);
+            nlist.innerHTML = '<li><h3>Unclassified</h3></li>';
+            notebookList.forEach(notebook => 
+            {
+                const nitem = document.createElement('li');
+                nitem.innerHTML = `
+                    <h3>${notebook.title}</h3>
+                    <button>Delete</button>
+                `;
+                nlist.appendChild(nitem);
+            });
+        }
+        function populateNoteList() {
+            const noteList = document.getElementById('note-list');
+            const notes = JSON.parse(localStorage.getItem('notes')) || [];
+            // const notes = []
+            noteList.innerHTML = '';
+            notes.forEach(note => {
+                const noteItem = document.createElement('div');
+                noteItem.classList.add('note-item');
+                noteItem.classList.add(note.notebookId);
+                // console.log()
+                noteItem.innerHTML = `
+                    <h3>${note.title}</h3>
+                    <p>${note.content}</p>
+                    <button>Delete</button>
+                `;
+                noteList.appendChild(noteItem);
+            });
+        }
+        const hndledlt = (e) => {
+            const notes = JSON.parse(localStorage.getItem('notes')) || [];
+            notes.forEach(note => {
+                if (note.title === e.target.previousElementSibling.previousElementSibling.textContent) {
+                    notes.splice(notes.indexOf(note), 1);
+                }
+            });
+            localStorage.setItem('notes', JSON.stringify(notes));
+            populateNoteList();
+        }
+        populateNotebookOptions();
+        populateNoteList();
+
+        const noteList = document.getElementById('note-list');
+        const modalTitle = document.querySelector('.modal-title-cont');
+        const modal = document.querySelector('.modal-cont');
+        const textarea = document.querySelector('.textarea-cont');
+
+        textarea.addEventListener('keyup', function (e) 
+        {
+            if (e.key === 'Shift') 
+            {
+                newNote.content = textarea.value;
+                const notes = JSON.parse(localStorage.getItem('notes')) || [];
+                notes.push(newNote);
+                localStorage.setItem('notes', JSON.stringify(notes));
+                populateNoteList();
+                textarea.value = '';
+                modal.style.display = 'none';
+            }
+        });
+
+        
+        const input = modalTitle.querySelector('input');
+        let newNote;
+        input.addEventListener('keyup', function (e) 
+        {
+            if (e.key === 'Enter') 
+            {
+                if(input.value === '') 
+                    newNote.title = 'Untitled';
+                else
+                    newNote.title = input.value;
+                newNote.notebookId = selectedNotebook;
+                input.value = ''
+                modalTitle.style.display = 'none';
+                modal.style.display = 'block';
+                textarea.focus();
+            }
+        });
+
+        // Add event listener for notebook creation button
+        document.getElementById('create-notebook-btn').addEventListener('click', function () 
+        {
+            const notebookTitle = prompt('Enter notebook title');
+            console.log(notebookTitle);
+            if (notebookTitle) 
+            {
+                const notebookList = JSON.parse(localStorage.getItem('notebooks')) || [];
+                const newNotebook = {
+                    id: Date.now(), // Unique ID for the notebook
+                    title: notebookTitle // Title of the notebook
+                };
+                notebookList.push(newNotebook);
+                localStorage.setItem('notebooks', JSON.stringify(notebookList));
+                populateNotebookOptions();
+            }
+        });
+        document.getElementById('create-note-btn').addEventListener('click', function () 
+        {
+            console.log('clicked');
+            modalTitle.style.display = 'block'
+            input.focus();
+
+            newNote = {
+                id: Date.now(), // Unique ID for the note
+                title: '', // Title of the note
+                content: textarea.value, // Content of the note
+                notebookId: 'unclassified' 
+            };
+        });
+        // delete button
+        noteList.addEventListener('click', function (e) {
+            if (e.target.tagName === 'BUTTON') {
+                hndledlt(e);
+            }
+        });
+        // delete button
+        nlist.addEventListener('click', function (e) 
+        {
+            if (e.target.tagName === 'BUTTON') 
+            {
+                const notebookList = JSON.parse(localStorage.getItem('notebooks')) || [];
+                notebookList.forEach(notebook => {
+                    if (notebook.title === e.target.previousElementSibling.textContent) {
+                        notebookList.splice(notebookList.indexOf(notebook), 1);
+                    }
+                });
+                localStorage.setItem('notebooks', JSON.stringify(notebookList));
+                populateNotebookOptions();
+            }
+            if (e.target.tagName === 'H3') // if clicked on 'h3' of notebook list, then filter notes by that notebook
+            {
+                selectedNotebook = e.target.textContent;
+                const notes = JSON.parse(localStorage.getItem('notes')) || [];
+                const noteItems = document.querySelectorAll('.note-item');
+                noteItems.forEach(noteItem => 
+                {
+                    if (noteItem.classList.contains(selectedNotebook) || (selectedNotebook === 'Unclassified')) 
+                        noteItem.style.display = 'block'
+                    else    
+                        noteItem.style.display = 'none';
+                });
+            }
+        });
+        // filter notes by notebook
+        
+
+
+    </script>
+</body>
+
+</html>
